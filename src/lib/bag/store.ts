@@ -441,7 +441,10 @@ export const useBag = create<BagState>((set, get) => ({
   verifyRecord: async (record, withKey) => {
     if (!get().ready) await get().boot();
     const pem = withKey ? getIdentity().publicPem : null;
-    const result = await verifyEvidence(record, { publicPem: pem });
+    const result = await verifyEvidence(record, {
+      publicPem: pem,
+      expectedKid: withKey ? getIdentity().kid : undefined,
+    });
     set({ verifyResult: result });
     return result;
   },

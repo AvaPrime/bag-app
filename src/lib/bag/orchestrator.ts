@@ -5,7 +5,7 @@ import {
   mintLease,
   signEvidence,
   verifyLease,
-} from "./doctrine";
+} from "./doctrine.ts";
 import {
   ENTERPRISE_POLICY,
   type CapabilityTier,
@@ -15,7 +15,7 @@ import {
   type Geometry,
   type PolicyGrant,
   type TargetSnapshot,
-} from "./types";
+} from "./types.ts";
 
 export interface LiveTarget {
   index: number;

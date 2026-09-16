@@ -312,6 +312,10 @@ function ZkPage() {
             <Link to="/boundary" className="text-fg underline-offset-2 hover:underline">
               Back to the boundary
             </Link>
+            . Joint computation is a different primitive —{" "}
+            <Link to="/mpc" className="text-fg underline-offset-2 hover:underline">
+              MPC lab
+            </Link>
             .
           </p>
         </div>

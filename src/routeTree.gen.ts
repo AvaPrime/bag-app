@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as BoundaryRouteImport } from './routes/boundary'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as MpcRouteImport } from './routes/mpc'
 import { Route as PilotRouteImport } from './routes/pilot'
 import { Route as RefusalRouteImport } from './routes/refusal'
 import { Route as VerifyRouteImport } from './routes/verify'
@@ -36,6 +37,11 @@ const BoundaryRoute = BoundaryRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MpcRoute = MpcRouteImport.update({
+  id: '/mpc',
+  path: '/mpc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PilotRoute = PilotRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/boundary': typeof BoundaryRoute
   '/demo': typeof DemoRoute
+  '/mpc': typeof MpcRoute
   '/pilot': typeof PilotRoute
   '/refusal': typeof RefusalRoute
   '/verify': typeof VerifyRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/boundary': typeof BoundaryRoute
   '/demo': typeof DemoRoute
+  '/mpc': typeof MpcRoute
   '/pilot': typeof PilotRoute
   '/refusal': typeof RefusalRoute
   '/verify': typeof VerifyRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/boundary': typeof BoundaryRoute
   '/demo': typeof DemoRoute
+  '/mpc': typeof MpcRoute
   '/pilot': typeof PilotRoute
   '/refusal': typeof RefusalRoute
   '/verify': typeof VerifyRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/boundary'
     | '/demo'
+    | '/mpc'
     | '/pilot'
     | '/refusal'
     | '/verify'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/boundary'
     | '/demo'
+    | '/mpc'
     | '/pilot'
     | '/refusal'
     | '/verify'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/boundary'
     | '/demo'
+    | '/mpc'
     | '/pilot'
     | '/refusal'
     | '/verify'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   BoundaryRoute: typeof BoundaryRoute
   DemoRoute: typeof DemoRoute
+  MpcRoute: typeof MpcRoute
   PilotRoute: typeof PilotRoute
   RefusalRoute: typeof RefusalRoute
   VerifyRoute: typeof VerifyRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mpc': {
+      id: '/mpc'
+      path: '/mpc'
+      fullPath: '/mpc'
+      preLoaderRoute: typeof MpcRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pilot': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   BoundaryRoute: BoundaryRoute,
   DemoRoute: DemoRoute,
+  MpcRoute: MpcRoute,
   PilotRoute: PilotRoute,
   RefusalRoute: RefusalRoute,
   VerifyRoute: VerifyRoute,

@@ -3,14 +3,15 @@ import {
   evaluatePolicy,
   getIdentity,
   getTrustStoreEntries,
+  identityRoundTrip,
   mintLease,
   verifyEvidence,
   verifyLease,
-} from "./doctrine";
-import { executeAuthorizedAction, type DispatchAdapter } from "./orchestrator";
-import { FORGED_WIRE_CLAIM } from "./samples";
-import type { ExecutionLease, ProbeResult, TargetSnapshot } from "./types";
-import { randomHex } from "./bytes";
+} from "./doctrine.ts";
+import { executeAuthorizedAction, type DispatchAdapter } from "./orchestrator.ts";
+import { FORGED_WIRE_CLAIM } from "./samples.ts";
+import type { ExecutionLease, ProbeResult, TargetSnapshot } from "./types.ts";
+import { randomHex } from "./bytes.ts";
 
 const snapshot: TargetSnapshot = {
   tagName: "button",
@@ -195,16 +196,15 @@ export async function runSelfAudit(): Promise<ProbeResult[]> {
 
   {
     const id = getIdentity();
+    const persist = identityRoundTrip();
     const resolved = getTrustStoreEntries().some((e) => e.kid === id.kid && e.status === "active");
     results.push({
       id: "P-07",
       finding: "F-5",
-      attack: "Determine whether the signing identity is pinnable, or regenerated per process.",
+      attack: "Signing identity must persist in localStorage and bind kid to the key fingerprint.",
       detected: "2026-09-16",
-      refused: !id.ephemeral && resolved,
-      detail: id.ephemeral
-        ? `EPHEMERAL DEV IDENTITY '${id.kid}'`
-        : `persistent identity '${id.kid}' resolves in the trust store`,
+      refused: persist.ok && !id.ephemeral && resolved,
+      detail: persist.detail,
     });
   }
 

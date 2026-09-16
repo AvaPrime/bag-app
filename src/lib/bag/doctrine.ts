@@ -1,3 +1,9 @@
+/**
+ * Browser kernel for the evaluation console.
+ * Mirror of packages/gateway/src/kernel/security-doctrine.ts in the Node Gateway.
+ * A change to either file is not done until the other is updated in the same change.
+ * doctrine.test.ts locks the clauses — do not weaken a probe to make a demo pass.
+ */
 import {
   ENTERPRISE_POLICY,
   MUTATING_TIERS,
@@ -11,7 +17,7 @@ import {
   type PolicyGrant,
   type TargetSnapshot,
   type VerifyResult,
-} from "./types";
+} from "./types.ts";
 import {
   bytesToPem,
   fingerprintHex,
@@ -24,14 +30,19 @@ import {
   toB64,
   toHex,
   uid,
-} from "./bytes";
+} from "./bytes.ts";
 
 const ED = { name: "Ed25519" } as AlgorithmIdentifier;
 const DRIFT_PX = 5;
-const DEFAULT_KID = "gateway-eval-2026-09";
+const KID_PREFIX = "gateway-eval-2026-09";
 const STORAGE_KEY = "bag.gateway.identity.v1";
 
 export const geometryDriftPx = DRIFT_PX;
+
+export function kidFromFingerprint(fp: string): string {
+  const hex = fp.replace(/[\s:]/g, "").slice(0, 8).toLowerCase();
+  return `${KID_PREFIX}-${hex}`;
+}
 
 let identity: GatewayIdentity | null = null;
 let privateKey: CryptoKey | null = null;
@@ -58,15 +69,23 @@ export async function bootstrapIdentity(): Promise<GatewayIdentity> {
       privateKey = await crypto.subtle.importKey("pkcs8", toArrayBuffer(pkcs8), ED, true, ["sign"]);
       publicKey = await crypto.subtle.importKey("spki", toArrayBuffer(spki), ED, true, ["verify"]);
       const fp = await sha256Hex(spki);
+      const fingerprint = fingerprintHex(fp);
+      const kid = kidFromFingerprint(fingerprint);
       identity = {
-        kid: parsed.kid,
-        fingerprint: fingerprintHex(fp),
+        kid,
+        fingerprint,
         publicPem: bytesToPem(spki, "PUBLIC KEY"),
         privatePkcs8: pkcs8,
         publicSpki: spki,
         ephemeral: false,
       };
-      trustStore.set(identity.kid, { spki, status: "active", cryptoKey: publicKey });
+      trustStore.set(kid, { spki, status: "active", cryptoKey: publicKey });
+      if (parsed.kid !== kid) {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ kid, pkcs8: parsed.pkcs8, spki: parsed.spki }),
+        );
+      }
       return identity;
     } catch {
       localStorage.removeItem(STORAGE_KEY);
@@ -79,9 +98,10 @@ export async function bootstrapIdentity(): Promise<GatewayIdentity> {
   const pkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", pair.privateKey));
   const spki = new Uint8Array(await crypto.subtle.exportKey("spki", pair.publicKey));
   const fp = await sha256Hex(spki);
+  const fingerprint = fingerprintHex(fp);
   identity = {
-    kid: DEFAULT_KID,
-    fingerprint: fingerprintHex(fp),
+    kid: kidFromFingerprint(fingerprint),
+    fingerprint,
     publicPem: bytesToPem(spki, "PUBLIC KEY"),
     privatePkcs8: pkcs8,
     publicSpki: spki,
@@ -111,6 +131,41 @@ export function getTrustStoreEntries(): { kid: string; status: string; fingerpri
 
 export function resetNonceStore(): void {
   consumedNonces.clear();
+}
+
+/** Test-only. Clears identity, trust store, and nonces. */
+export function resetDoctrineForTests(): void {
+  identity = null;
+  privateKey = null;
+  publicKey = null;
+  trustStore.clear();
+  consumedNonces.clear();
+}
+
+export function identityRoundTrip(): { ok: boolean; detail: string } {
+  if (!identity) return { ok: false, detail: "identity not provisioned" };
+  if (typeof localStorage === "undefined") {
+    return { ok: false, detail: "localStorage unavailable — identity cannot be pinned" };
+  }
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return { ok: false, detail: "identity missing from localStorage" };
+  try {
+    const parsed = JSON.parse(raw) as { kid?: string; spki?: string };
+    if (parsed.kid !== identity.kid) {
+      return { ok: false, detail: `stored kid '${parsed.kid ?? "none"}' diverges from live '${identity.kid}'` };
+    }
+    if (!parsed.spki) return { ok: false, detail: "stored spki missing" };
+    const derived = kidFromFingerprint(identity.fingerprint);
+    if (identity.kid !== derived) {
+      return { ok: false, detail: `kid '${identity.kid}' is not bound to fingerprint ${identity.fingerprint}` };
+    }
+    return {
+      ok: true,
+      detail: `persistent identity '${identity.kid}' round-trips through localStorage and is bound to the key fingerprint`,
+    };
+  } catch {
+    return { ok: false, detail: "stored identity unreadable" };
+  }
 }
 
 export function nonceStoreSize(): number {
@@ -345,7 +400,7 @@ export async function signEvidence(record: Omit<EvidenceRecord, "signature">): P
 
 export async function verifyEvidence(
   record: EvidenceRecord,
-  options?: { publicPem?: string | null; requireKey?: boolean },
+  options?: { publicPem?: string | null; requireKey?: boolean; expectedKid?: string },
 ): Promise<VerifyResult> {
   if (record.signature.publicKey) {
     return {
@@ -385,7 +440,15 @@ export async function verifyEvidence(
     const key = await crypto.subtle.importKey("spki", toArrayBuffer(spki), ED, true, ["verify"]);
     const ok = await verifyWithKey(key, canonicalEvidence(record), record.signature.value);
     if (!ok) {
-      return { verdict: "INVALID", reason: "SIGNATURE INVALID: Ed25519 verification failed against the pinned key.", checked: true };
+      const kidNote =
+        options?.expectedKid && record.signature.kid && record.signature.kid !== options.expectedKid
+          ? ` Record kid '${record.signature.kid}' is not this console’s identity '${options.expectedKid}'. Paste it in the browser that signed it, or pin the signer’s PEM.`
+          : "";
+      return {
+        verdict: "INVALID",
+        reason: "SIGNATURE INVALID: Ed25519 verification failed against the pinned key." + kidNote,
+        checked: true,
+      };
     }
     return {
       verdict: "VALID",

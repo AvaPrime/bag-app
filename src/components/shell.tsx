@@ -10,6 +10,7 @@ const NAV = [
   { to: "/audit", label: "Self-audit" },
   { to: "/verify", label: "Evidence" },
   { to: "/zk", label: "ZK" },
+  { to: "/mpc", label: "MPC" },
   { to: "/boundary", label: "Boundary" },
   { to: "/pilot", label: "Pilot" },
 ] as const;
@@ -46,10 +47,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           {identity ? (
-            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <div
+              className="hidden shrink-0 items-center gap-2 sm:flex"
+              title="Generated in this browser. Not the production Gateway’s key."
+            >
               <span className="size-1.5 rounded-full bg-verified" />
               <span className="font-mono text-[11px] text-subtle">{identity.kid}</span>
-              <span className="hidden font-mono text-[11px] text-faint lg:inline">
+              <span className="hidden font-mono text-[11px] text-faint lg:inline">demo</span>
+              <span className="hidden font-mono text-[11px] text-faint xl:inline">
                 {identity.fingerprint}
               </span>
             </div>

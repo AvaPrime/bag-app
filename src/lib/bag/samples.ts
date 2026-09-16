@@ -1,4 +1,4 @@
-import type { EvidenceRecord } from "./types";
+import type { EvidenceRecord } from "./types.ts";
 
 /** Bundled HMAC-era sample. Structure is plausible; it was never actually verified. */
 export const HMAC_ERA_EVIDENCE: EvidenceRecord = {

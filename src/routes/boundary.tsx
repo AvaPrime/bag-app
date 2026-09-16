@@ -109,10 +109,25 @@ function BoundaryPage() {
           <li>domHash collides for same-tag, no-id, same-size elements and is resize-sensitive.</li>
           <li>No third-party pentest, SOC 2, HSM, or automated key registry.</li>
           <li>Human-approval ceremonies are not implemented; declared gates deny.</li>
-          <li>Selective disclosure of evidence (ZK) is not in v0.1 — Sigma, Bulletproofs, and a guest trace. RISC Zero / SP1 / OpenVM proving is server-side. The guest is not a receipt.</li>
+          <li>
+            Selective disclosure of evidence (ZK) is not in v0.1. The{" "}
+            <Link to="/zk" className="text-fg underline-offset-2 hover:underline">
+              ZK lab
+            </Link>{" "}
+            shows what Sigma, Bulletproofs, and a guest of verifyLease would and would not buy — a journal is not a receipt.
+          </li>
+          <li>
+            Joint computation (MPC) is not in v0.1. The{" "}
+            <Link to="/mpc" className="text-fg underline-offset-2 hover:underline">
+              MPC lab
+            </Link>{" "}
+            shows what Shamir 2-of-3, Beaver AND, and FROST would and would not buy — a reconstructed share is not a lease, and A3 still denies.
+          </li>
         </ul>
         <p className="mt-4 text-sm text-subtle">
-          The Puppeteer path shares the Gateway process — defense in depth, not independent attestation. The extension is the real boundary.
+          The identity in the nav is generated fresh in this browser and is not the production Gateway’s key. The
+          Puppeteer path shares the Gateway process — defense in depth, not independent attestation. The extension is the
+          real boundary.
         </p>
       </section>
 
