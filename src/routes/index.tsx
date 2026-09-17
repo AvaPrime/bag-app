@@ -10,19 +10,16 @@ const PIPELINE = ["Propose", "Authorize", "Verify", "Actuate", "Attest"] as cons
 
 const STEPS = [
   {
-    n: "01",
     title: "Request",
     span: "Propose → Authorize",
     body: "The agent asks to click. A plan confers no authority. Policy mints a target-bound lease — or denies.",
   },
   {
-    n: "02",
     title: "Guard",
     span: "Verify → Actuate",
     body: "Drift, occlusion, mutation, expiry, or replay kills the lease before dispatch. No lease, no click.",
   },
   {
-    n: "03",
     title: "Prove",
     span: "Attest",
     body: "Evidence is signed. The signature proves the key holder signed it. Provenance is how you got the key.",
@@ -36,26 +33,26 @@ function Home() {
   return (
     <main className="bg-grid -mx-4 -my-8 min-h-[calc(100dvh-57px)] px-4 py-10 sm:-mx-6 sm:px-6 sm:py-16">
       <section className="max-w-3xl">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-subtle">
-          v0.1 evaluation console · Security Boundary
-        </p>
-        <h1 className="mt-4 text-[clamp(2.25rem,6vw,4.25rem)] font-medium leading-[1.05] tracking-[-0.035em]">
-          Governed browser execution for consequential AI-agent workflows.
+        <p className="font-mono text-[12px] text-subtle">v0.1 evaluation console</p>
+        <h1 className="mt-5 text-[clamp(2.75rem,8vw,5.75rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
+          Skills grant.
+          <br />
+          BAG governs.
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted sm:text-lg">
           The agent proposes. The Gateway decides. The browser is allowed to act.
           Evidence proves what happened — and what was refused.
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8">
           <Button asChild size="lg">
             <Link to="/demo">
-              Run the five-act demonstration
+              Start evaluation
               <ArrowRight className="size-4" />
             </Link>
           </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link to="/audit">Hand over the self-audit</Link>
-          </Button>
+          <p className="mt-3 max-w-md text-sm text-subtle">
+            Four demos, five minutes, ends in a packet you can hand to your security team.
+          </p>
         </div>
         {identity ? (
           <p className="mt-6 font-mono text-[12px] text-subtle">
@@ -66,7 +63,7 @@ function Home() {
       </section>
 
       <section className="mt-16 max-w-4xl">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">How a click is allowed</p>
+        <p className="font-mono text-[12px] text-subtle">How a click is allowed</p>
         <ol className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-muted">
           {PIPELINE.map((label, i) => (
             <li key={label} className="flex items-center gap-2">
@@ -77,10 +74,8 @@ function Home() {
         </ol>
         <ol className="mt-5 grid gap-3 sm:grid-cols-3">
           {STEPS.map((step) => (
-            <li key={step.n} className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
-              <p className="font-mono text-[11px] text-subtle">
-                {step.n} · {step.span}
-              </p>
+            <li key={step.title} className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
+              <p className="font-mono text-[11px] text-subtle">{step.span}</p>
               <h2 className="mt-2 text-base font-medium tracking-tight">{step.title}</h2>
               <p className="mt-2 text-sm text-muted">{step.body}</p>
             </li>
@@ -98,7 +93,7 @@ function Home() {
         <Claim
           icon={<ShieldOff className="size-4" />}
           title="It publishes its own attacks"
-          body="Eight probes that once succeeded against this codebase. Found, fixed, regression-locked, still refused."
+          body="Nine probes that once succeeded against this codebase. Found, fixed, regression-locked, still refused."
           to="/audit"
         />
         <Claim
@@ -113,7 +108,7 @@ function Home() {
         <h2 className="text-lg font-medium tracking-tight">What this is, and is not</h2>
         <div className="mt-5 grid gap-6 sm:grid-cols-2">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-verified">Say</p>
+            <p className="font-mono text-[12px] text-verified">Say</p>
             <ul className="mt-3 space-y-2 text-sm text-muted">
               <li>Enterprise-oriented security architecture with executable enforcement.</li>
               <li>Fails closed when defined invariants are violated.</li>
@@ -121,7 +116,7 @@ function Home() {
             </ul>
           </div>
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-refused">Never</p>
+            <p className="font-mono text-[12px] text-refused">Never</p>
             <ul className="mt-3 space-y-2 text-sm text-muted">
               <li>Enterprise-ready AI security platform.</li>
               <li>Cryptographic proof of everything that happened.</li>

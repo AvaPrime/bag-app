@@ -85,7 +85,7 @@ function DemoPage() {
   return (
     <main className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Five-act demonstration</p>
+        <p className="font-mono text-[12px] text-subtle">Five-act demonstration</p>
         <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Watch it act. Then watch it refuse.</h1>
         <p className="mt-3 max-w-xl text-sm text-muted sm:text-base">
           Live Ed25519 in this browser. The treasury page is the target. Native dispatches only increment when the adapter is armed by a valid lease.
@@ -145,7 +145,7 @@ function DemoPage() {
         <DispatchMeter />
         {lastLease ? (
           <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">Last lease</p>
+            <p className="font-mono text-[12px] text-subtle">Last lease</p>
             <p className="mt-2 font-mono text-[12px] text-muted">
               {lastLease.leaseId}
               <br />
@@ -158,7 +158,7 @@ function DemoPage() {
         {lastEvidence ? (
           <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">Evidence</p>
+              <p className="font-mono text-[12px] text-subtle">Evidence</p>
               <StateBadge state={lastEvidence.execution.state} />
             </div>
             <p className="mt-2 font-mono text-[12px] text-muted">

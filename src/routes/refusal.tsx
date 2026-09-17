@@ -1,12 +1,158 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { KernelLog } from "@/components/kernel-log";
 import { DispatchMeter, TreasuryFixture } from "@/components/treasury";
 import { TREASURY_HOST, useBag } from "@/lib/bag/store";
 import { evaluatePolicy, ENTERPRISE_POLICY } from "@/lib/bag/doctrine";
+import type { CapabilityTier, PolicyGrant } from "@/lib/bag/types";
+import { cn } from "@/lib/cn";
 
 export const Route = createFileRoute("/refusal")({ component: RefusalPage });
+
+const TIER_OPTIONS: CapabilityTier[] = ["R0", "R1", "A1", "A2"];
+
+function parseList(raw: string): string[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function Scratchpad() {
+  const [allowlist, setAllowlist] = useState("*.internal.acmebank.com, treasury.internal.acmebank.com");
+  const [ttlSec, setTtlSec] = useState(30);
+  const [tiers, setTiers] = useState<CapabilityTier[]>(["R0", "R1", "A1", "A2"]);
+  const [gates, setGates] = useState("confirm_critical_action, A3:*");
+  const lastLine = useRef<string | null>(null);
+
+  const grant: PolicyGrant = useMemo(
+    () => ({
+      policyId: "scratchpad-v0.1",
+      principalId: "claude-enterprise-agent",
+      allowedTiers: tiers,
+      allowedDomains: parseList(allowlist),
+      maxLeaseTtlMs: ttlSec * 1000,
+      requiresHumanApprovalFor: parseList(gates),
+    }),
+    [allowlist, ttlSec, tiers, gates],
+  );
+
+  const rows = useMemo(
+    () => [
+      {
+        label: `A2 ${TREASURY_HOST}`,
+        result: evaluatePolicy(grant, "A2", TREASURY_HOST, "click_element_by_index"),
+      },
+      {
+        label: "A2 evil-phishing-site.example",
+        result: evaluatePolicy(grant, "A2", "evil-phishing-site.example", "click_element_by_index"),
+      },
+      {
+        label: "A3 confirm_critical_action",
+        result: evaluatePolicy(grant, "A3", TREASURY_HOST, "confirm_critical_action"),
+      },
+      {
+        label: "D2 credentials",
+        result: evaluatePolicy(grant, "D2", TREASURY_HOST, "click_element_by_index"),
+      },
+    ],
+    [grant],
+  );
+
+  useEffect(() => {
+    const primary = rows[0]!.result;
+    const line = primary.permitted
+      ? `Scratchpad: A2 ${TREASURY_HOST} permitted · TTL ${grant.maxLeaseTtlMs}ms`
+      : `Scratchpad: ${primary.reason}`;
+    if (lastLine.current === line) return;
+    lastLine.current = line;
+    useBag.getState().log({
+      level: primary.permitted ? "ok" : "deny",
+      state: primary.permitted ? "POLICY_EVALUATED" : "REJECTED",
+      message: line,
+    });
+  }, [grant.maxLeaseTtlMs, rows]);
+
+  function toggleTier(tier: CapabilityTier) {
+    setTiers((cur) => (cur.includes(tier) ? cur.filter((t) => t !== tier) : [...cur, tier]));
+  }
+
+  return (
+    <section className="mt-8 rounded-lg bg-inset p-4 shadow-[var(--shadow-border)]">
+      <p className="font-mono text-[12px] text-subtle">Live grant</p>
+      <p className="mt-1 text-sm text-muted">
+        This is the kernel’s policy object, not a form. Changing a field re-evaluates immediately. It does not mint a lease.
+      </p>
+
+      <label className="mt-4 block">
+        <span className="font-mono text-[11px] text-subtle">Domain allowlist</span>
+        <input
+          value={allowlist}
+          onChange={(e) => setAllowlist(e.target.value)}
+          spellCheck={false}
+          className="mt-1.5 h-11 w-full rounded-md bg-surface px-3 font-mono text-[12px] text-fg shadow-[var(--shadow-border)]"
+        />
+      </label>
+
+      <label className="mt-4 block">
+        <span className="font-mono text-[11px] text-subtle">Lease TTL {ttlSec}s</span>
+        <input
+          type="range"
+          min={5}
+          max={30}
+          step={1}
+          value={ttlSec}
+          onChange={(e) => setTtlSec(Number(e.target.value))}
+          className="mt-2 w-full accent-verified"
+        />
+      </label>
+
+      <div className="mt-4">
+        <p className="font-mono text-[11px] text-subtle">Allowed tiers</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {TIER_OPTIONS.map((tier) => {
+            const on = tiers.includes(tier);
+            return (
+              <button
+                key={tier}
+                type="button"
+                onClick={() => toggleTier(tier)}
+                className={cn(
+                  "h-9 rounded-md px-3 font-mono text-[12px] shadow-[var(--shadow-border)]",
+                  on ? "bg-elevated text-fg" : "bg-surface text-subtle",
+                )}
+              >
+                {tier}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <label className="mt-4 block">
+        <span className="font-mono text-[11px] text-subtle">Approval-gate pattern</span>
+        <input
+          value={gates}
+          onChange={(e) => setGates(e.target.value)}
+          spellCheck={false}
+          className="mt-1.5 h-11 w-full rounded-md bg-surface px-3 font-mono text-[12px] text-fg shadow-[var(--shadow-border)]"
+        />
+      </label>
+
+      <ul className="mt-4 space-y-1.5 font-mono text-[12px]">
+        {rows.map((row) => (
+          <li key={row.label} className="flex gap-2">
+            <span className={row.result.permitted ? "text-verified" : "text-refused"}>
+              {row.result.permitted ? "PERMIT" : "DENY"}
+            </span>
+            <span className="text-muted">{row.label}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function RefusalPage() {
   const [note, setNote] = useState<string | null>(null);
@@ -28,11 +174,13 @@ function RefusalPage() {
   return (
     <main className="grid gap-8 lg:grid-cols-2">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Refusal as a feature</p>
+        <p className="font-mono text-[12px] text-subtle">Refusal as a feature</p>
         <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Try to make it click anyway.</h1>
         <p className="mt-3 max-w-xl text-sm text-muted sm:text-base">
           Each control mutates the live page or the authority artifact, then asks the Gateway to actuate. The meter on the right is the only number that matters.
         </p>
+
+        <Scratchpad />
 
         <div className="mt-6 grid gap-2">
           <Button

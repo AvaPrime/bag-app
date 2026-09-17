@@ -1,23 +1,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { GateMark } from "@/components/logo";
+import { EVAL_PATH, EVAL_REF } from "@/lib/bag/eval-path";
 import { useBag } from "@/lib/bag/store";
 import { cn } from "@/lib/cn";
-
-const NAV = [
-  { to: "/", label: "Overview" },
-  { to: "/demo", label: "Flagship" },
-  { to: "/refusal", label: "Refusal" },
-  { to: "/audit", label: "Self-audit" },
-  { to: "/verify", label: "Evidence" },
-  { to: "/zk", label: "ZK" },
-  { to: "/mpc", label: "MPC" },
-  { to: "/boundary", label: "Boundary" },
-  { to: "/pilot", label: "Pilot" },
-] as const;
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const identity = useBag((s) => s.identity);
+  const visited = useBag((s) => s.visited);
+  const markVisited = useBag((s) => s.markVisited);
+
+  useEffect(() => {
+    markVisited(pathname);
+  }, [pathname, markVisited]);
+
+  const pathDone = EVAL_PATH.filter((item) => visited.includes(item.to)).length;
+  const pathPct = Math.round((pathDone / EVAL_PATH.length) * 100);
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
@@ -29,22 +28,50 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Browser Agent Gateway
             </span>
           </Link>
-          <nav className="-mx-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {NAV.map((item) => {
-              const active = pathname === item.to;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "shrink-0 rounded-sm px-2.5 py-2 text-sm transition-colors duration-150",
-                    active ? "text-fg" : "text-subtle hover:text-fg",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+          <nav className="-mx-1 flex min-w-0 flex-1 items-center gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="relative shrink-0 pb-1">
+              <div className="flex items-center">
+                {EVAL_PATH.map((item) => {
+                  const active = pathname === item.to;
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={cn(
+                        "shrink-0 rounded-sm px-2.5 py-2 text-sm transition-colors duration-150",
+                        active ? "text-fg" : "text-subtle hover:text-fg",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+              <div className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-line" aria-hidden="true">
+                <div
+                  className="h-px bg-verified transition-[width] duration-200"
+                  style={{ width: `${pathPct}%` }}
+                />
+              </div>
+            </div>
+            <span className="hidden h-4 w-px shrink-0 bg-line-strong sm:block" aria-hidden="true" />
+            <div className="flex shrink-0 items-center">
+              {EVAL_REF.map((item) => {
+                const active = pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "shrink-0 rounded-sm px-2.5 py-2 text-sm transition-colors duration-150",
+                      active ? "text-muted" : "text-faint hover:text-subtle",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
           {identity ? (
             <div

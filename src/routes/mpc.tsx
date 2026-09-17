@@ -70,7 +70,7 @@ function MpcPage() {
   return (
     <main className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <div className="min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Joint computation lab</p>
+        <p className="font-mono text-[12px] text-subtle">Joint computation lab</p>
         <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">MPC is not a Gateway.</h1>
         <p className="mt-3 max-w-xl text-sm text-muted sm:text-base">
           {lab === "family"

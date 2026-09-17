@@ -34,7 +34,7 @@ function PilotPage() {
 
   return (
     <main className="max-w-3xl">
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Design partner</p>
+      <p className="font-mono text-[12px] text-subtle">Design partner</p>
       <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">
         One workflow. One application. One invoice.
       </h1>
@@ -107,7 +107,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{label}</span>
+      <span className="font-mono text-[11px] text-subtle">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

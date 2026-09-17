@@ -25,6 +25,7 @@ import type {
   VerifyResult,
 } from "./types";
 import { ENTERPRISE_POLICY } from "./types";
+import { EVAL_PATH, type EvalPathTo } from "./eval-path";
 
 export const TREASURY_HOST = "treasury.internal.acmebank.com";
 export const TREASURY_URL = `https://${TREASURY_HOST}/wires/W-88421`;
@@ -57,6 +58,7 @@ interface BagState {
   armed: boolean;
   demoRunning: boolean;
   demoAct: number;
+  visited: EvalPathTo[];
   boot: () => Promise<void>;
   registerTarget: (el: HTMLElement | null) => void;
   setTreasury: (patch: Partial<TreasuryState>) => void;
@@ -79,6 +81,50 @@ interface BagState {
   verifyRecord: (record: EvidenceRecord, withKey: boolean) => Promise<VerifyResult>;
   setDemoAct: (n: number) => void;
   setDemoRunning: (v: boolean) => void;
+  markVisited: (path: string) => void;
+}
+
+const EVIDENCE_KEY = "bag.gateway.lastEvidence.v1";
+const VISIT_KEY = "bag.visited.v1";
+
+function readVisited(): EvalPathTo[] {
+  if (typeof sessionStorage === "undefined") return [];
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(VISIT_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(raw)) return [];
+    return EVAL_PATH.map((p) => p.to).filter((to) => raw.includes(to));
+  } catch {
+    return [];
+  }
+}
+
+function persistVisited(visited: EvalPathTo[]): void {
+  try {
+    sessionStorage.setItem(VISIT_KEY, JSON.stringify(visited));
+  } catch {
+    /* quota */
+  }
+}
+
+function persistEvidence(record: EvidenceRecord): void {
+  try {
+    localStorage.setItem(EVIDENCE_KEY, JSON.stringify(record));
+  } catch {
+    /* quota */
+  }
+}
+
+function readEvidence(): EvidenceRecord | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(EVIDENCE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as EvidenceRecord;
+    if (!parsed?.evidenceId || !parsed?.signature) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 let logSeq = 0;
@@ -116,7 +162,7 @@ export const useBag = create<BagState>((set, get) => ({
   targetEl: null,
   dispatchCount: 0,
   lastLease: null,
-  lastEvidence: null,
+  lastEvidence: readEvidence(),
   ledger: [],
   logs: [],
   probes: null,
@@ -124,11 +170,13 @@ export const useBag = create<BagState>((set, get) => ({
   armed: false,
   demoRunning: false,
   demoAct: 0,
+  visited: readVisited(),
 
   boot: async () => {
     try {
       const identity = await bootstrapIdentity();
-      set({ ready: true, identity, bootError: null });
+      const lastEvidence = get().lastEvidence ?? readEvidence();
+      set({ ready: true, identity, bootError: null, lastEvidence });
     } catch (err) {
       set({
         ready: false,
@@ -154,6 +202,16 @@ export const useBag = create<BagState>((set, get) => ({
 
   setDemoAct: (n) => set({ demoAct: n }),
   setDemoRunning: (v) => set({ demoRunning: v }),
+
+  markVisited: (path) => {
+    const match = EVAL_PATH.find((item) => item.to === path);
+    if (!match) return;
+    const current = get().visited;
+    if (current.includes(match.to)) return;
+    const visited = [...current, match.to];
+    persistVisited(visited);
+    set({ visited });
+  },
 
   log: (entry) => {
     const item: KernelLog = { ...entry, id: `log_${++logSeq}`, at: Date.now() };
@@ -302,6 +360,7 @@ export const useBag = create<BagState>((set, get) => ({
         verification: { status: "INVALIDATED", postConditionsSatisfied: [], unsatisfied: [pre.reason] },
       });
       set((s) => ({ lastEvidence: evidence, ledger: [...s.ledger, evidence] }));
+      persistEvidence(evidence);
       return false;
     }
 
@@ -344,6 +403,7 @@ export const useBag = create<BagState>((set, get) => ({
       ledger: [...s.ledger, result.evidence],
       lastLease: result.lease ?? s.lastLease,
     }));
+    persistEvidence(result.evidence);
 
     if (result.dispatched) {
       get().log({

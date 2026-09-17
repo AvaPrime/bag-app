@@ -136,7 +136,7 @@ export function DispatchMeter() {
   const count = useBag((s) => s.dispatchCount);
   return (
     <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">Native dispatches</p>
+      <p className="font-mono text-[12px] text-subtle">Native dispatches</p>
       <p className="mt-1 font-mono text-4xl tabular tracking-tight">{count}</p>
       <p className="mt-1 text-sm text-muted">
         Increments only when the adapter actuates under a valid lease.

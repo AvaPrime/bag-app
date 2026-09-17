@@ -15,7 +15,7 @@ function VerifyPage() {
   const lastEvidence = useBag((s) => s.lastEvidence);
   const identity = useBag((s) => s.identity);
   const [keyOn, setKeyOn] = useState(false);
-  const [source, setSource] = useState<"last" | "hmac" | "forged" | "pasted">("hmac");
+  const [source, setSource] = useState<"last" | "hmac" | "forged" | "pasted">("last");
   const [pasted, setPasted] = useState<EvidenceRecord | null>(null);
   const [draft, setDraft] = useState("");
   const [pasteNote, setPasteNote] = useState<string | null>(null);
@@ -72,7 +72,7 @@ function VerifyPage() {
   return (
     <main className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Independent witness</p>
+        <p className="font-mono text-[12px] text-subtle">Independent witness</p>
         <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">
           Three states. Never a polite pass.
         </h1>
@@ -128,12 +128,14 @@ function VerifyPage() {
             {copied ? "Copied" : "Copy JSON"}
           </Button>
           {source === "last" && !lastEvidence ? (
-            <p className="self-center text-sm text-subtle">Run the flagship demo first.</p>
+            <p className="self-center text-sm text-subtle">
+              No evidence loaded yet. Run Flagship, or paste a record you already have.
+            </p>
           ) : null}
         </div>
 
         <label className="mt-5 block min-w-0">
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">Paste a record</span>
+          <span className="font-mono text-[11px] text-subtle">Paste a record</span>
           <textarea
             value={draft}
             onChange={(e) => {
@@ -170,9 +172,11 @@ function VerifyPage() {
       </div>
 
       <aside className="min-w-0 rounded-xl bg-inset p-4 shadow-[var(--shadow-border)] sm:p-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">Record under audit</p>
+        <p className="font-mono text-[12px] text-subtle">Record under audit</p>
         <pre className="mt-3 max-h-[520px] min-w-0 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-muted">
-          {record ? JSON.stringify(record, null, 2) : "No record."}
+          {record
+            ? JSON.stringify(record, null, 2)
+            : "No evidence loaded yet. Run Flagship, or paste a record you already have."}
         </pre>
       </aside>
     </main>

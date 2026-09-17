@@ -8,7 +8,7 @@ export function KernelLog({ compact }: { compact?: boolean }) {
   return (
     <div className="rounded-lg bg-inset p-3 shadow-[var(--shadow-border)]">
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">Kernel</p>
+        <p className="font-mono text-[12px] text-subtle">Kernel</p>
         <p className="font-mono text-[11px] text-faint">{slice.length} events</p>
       </div>
       {slice.length === 0 ? (

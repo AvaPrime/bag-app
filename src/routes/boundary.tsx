@@ -51,7 +51,7 @@ const TIERS = [
 function BoundaryPage() {
   return (
     <main className="max-w-3xl">
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">Security Boundary v0.1</p>
+      <p className="font-mono text-[12px] text-subtle">Security Boundary v0.1</p>
       <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">
         One invariant. Every clause is load-bearing.
       </h1>
@@ -82,7 +82,7 @@ function BoundaryPage() {
       <h2 className="mt-12 text-xl font-medium tracking-tight">Capability tiers</h2>
       <div className="mt-4 overflow-hidden rounded-lg shadow-[var(--shadow-border)]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-elevated font-mono text-[11px] uppercase tracking-[0.12em] text-subtle">
+          <thead className="bg-elevated font-mono text-[11px] text-subtle">
             <tr>
               <th className="px-4 py-3">Tier</th>
               <th className="px-4 py-3">Scope</th>
