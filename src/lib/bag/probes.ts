@@ -131,6 +131,8 @@ export async function runSelfAudit(): Promise<ProbeResult[]> {
       expiresAt: Date.now() + 20_000,
       alg: "Ed25519" as const,
       kid: "rogue-kid",
+      policyId: "enterprise-treasury-v0.1",
+      policyHash: "00".repeat(32),
       signature: "cd".repeat(64),
     } as ExecutionLease;
     const v = await verifyLease(forged, { tabId: 1, targetIndex: 5 });

@@ -20,6 +20,7 @@ import {
 } from "./types.ts";
 import {
   bytesToPem,
+  canonicalJson,
   fingerprintHex,
   fromB64,
   fromHex,
@@ -184,7 +185,25 @@ function leasePayload(lease: Omit<ExecutionLease, "signature"> | ExecutionLease)
     lease.expiresAt,
     lease.kid,
     lease.tier,
+    lease.policyId,
+    lease.policyHash,
   ].join(":");
+}
+
+/** Grant body as hashed at mint. Set-like fields are sorted so key order cannot mint a different lease. */
+export function canonicalPolicyGrant(grant: PolicyGrant): string {
+  return canonicalJson({
+    allowedDomains: [...grant.allowedDomains].sort(),
+    allowedTiers: [...grant.allowedTiers].sort(),
+    maxLeaseTtlMs: grant.maxLeaseTtlMs,
+    policyId: grant.policyId,
+    principalId: grant.principalId,
+    requiresHumanApprovalFor: [...grant.requiresHumanApprovalFor].sort(),
+  });
+}
+
+export async function hashPolicyGrant(grant: PolicyGrant): Promise<string> {
+  return sha256Hex(canonicalPolicyGrant(grant));
 }
 
 async function signBytes(message: string): Promise<string> {
@@ -292,6 +311,8 @@ export async function mintLease(input: {
     expiresAt: issuedAt + ttl,
     alg: "Ed25519",
     kid: id.kid,
+    policyId: grant.policyId,
+    policyHash: await hashPolicyGrant(grant),
   };
   const signature = await signBytes(leasePayload(unsigned));
   return { ...unsigned, signature };
@@ -310,13 +331,15 @@ const REQUIRED_LEASE_FIELDS: (keyof ExecutionLease)[] = [
   "issuedAt",
   "expiresAt",
   "alg",
+  "policyId",
+  "policyHash",
   "signature",
 ];
 
 export async function verifyLease(
   lease: ExecutionLease,
   expected?: { tabId?: number; targetIndex?: number },
-  options?: { consumeNonce?: boolean },
+  options?: { consumeNonce?: boolean; grant?: PolicyGrant },
 ): Promise<LeaseVerifyResult> {
   if (lease.publicKey) {
     return { valid: false, reason: "ERR_LEASE_EMBEDDED_KEY_REJECTED: artifact may not define its own trust anchor" };
@@ -343,6 +366,19 @@ export async function verifyLease(
   if (Date.now() >= lease.expiresAt) {
     return { valid: false, reason: "ERR_LEASE_EXPIRED" };
   }
+
+  const liveGrant = options?.grant ?? ENTERPRISE_POLICY;
+  if (lease.policyId !== liveGrant.policyId) {
+    return {
+      valid: false,
+      reason: `ERR_LEASE_POLICY_DRIFT: policyId ${lease.policyId} is not live (${liveGrant.policyId})`,
+    };
+  }
+  const liveHash = await hashPolicyGrant(liveGrant);
+  if (lease.policyHash !== liveHash) {
+    return { valid: false, reason: "ERR_LEASE_POLICY_DRIFT: grant changed since mint" };
+  }
+
   if (expected?.tabId !== undefined && expected.tabId !== lease.tabId) {
     return { valid: false, reason: `ERR_LEASE_TARGET_MISMATCH: tabId expected ${expected.tabId} got ${String(lease.tabId)}` };
   }
@@ -377,7 +413,7 @@ export function checkPreDispatch(
 }
 
 function canonicalEvidence(record: Omit<EvidenceRecord, "signature"> | EvidenceRecord): string {
-  const body = {
+  return canonicalJson({
     evidenceId: record.evidenceId,
     timestamp: record.timestamp,
     intent: record.intent,
@@ -385,8 +421,7 @@ function canonicalEvidence(record: Omit<EvidenceRecord, "signature"> | EvidenceR
     execution: record.execution,
     effect: record.effect,
     verification: record.verification,
-  };
-  return JSON.stringify(body);
+  });
 }
 
 export async function signEvidence(record: Omit<EvidenceRecord, "signature">): Promise<EvidenceRecord> {

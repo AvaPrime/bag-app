@@ -5,6 +5,7 @@ import {
   checkPreDispatch,
   evaluatePolicy,
   getIdentity,
+  hashPolicyGrant,
   identityRoundTrip,
   kidFromFingerprint,
   mintLease,
@@ -102,6 +103,70 @@ describe("verifyLease", () => {
     });
     const v = await verifyLease(lease, { tabId: 1, targetIndex: 5 });
     assert.equal(v.valid, true, v.reason);
+    assert.equal(lease.policyId, ENTERPRISE_POLICY.policyId);
+    assert.equal(lease.policyHash, await hashPolicyGrant(ENTERPRISE_POLICY));
+  });
+
+  it("refuses a lease that omits policyHash", async () => {
+    const lease = await mintLease({
+      agentId: "agent",
+      tabId: 1,
+      frameId: 0,
+      targetIndex: 5,
+      snapshot,
+      tier: "A2",
+    });
+    const { policyHash: _drop, ...rest } = lease;
+    const v = await verifyLease(rest as ExecutionLease, { tabId: 1, targetIndex: 5 });
+    assert.equal(v.valid, false);
+    assert.match(v.reason ?? "", /ERR_MALFORMED_LEASE: missing policyHash/);
+  });
+
+  it("a swapped policyHash invalidates the signature", async () => {
+    const lease = await mintLease({
+      agentId: "agent",
+      tabId: 1,
+      frameId: 0,
+      targetIndex: 5,
+      snapshot,
+      tier: "A2",
+    });
+    const other = await hashPolicyGrant({
+      ...ENTERPRISE_POLICY,
+      allowedDomains: ["evil.example"],
+    });
+    const v = await verifyLease({ ...lease, policyHash: other }, { tabId: 1, targetIndex: 5 });
+    assert.equal(v.valid, false);
+    assert.match(v.reason ?? "", /ERR_LEASE_SIGNATURE_INVALID/);
+  });
+
+  it("refuses a well-signed lease after the live grant rotates", async () => {
+    const lease = await mintLease({
+      agentId: "agent",
+      tabId: 1,
+      frameId: 0,
+      targetIndex: 5,
+      snapshot,
+      tier: "A2",
+    });
+    const rotated = { ...ENTERPRISE_POLICY, allowedDomains: ["other.internal.acmebank.com"] };
+    const v = await verifyLease(lease, { tabId: 1, targetIndex: 5 }, { grant: rotated });
+    assert.equal(v.valid, false);
+    assert.match(v.reason ?? "", /ERR_LEASE_POLICY_DRIFT/);
+  });
+
+  it("hashes equivalent grants bit-for-bit regardless of key and set order", async () => {
+    const a = await hashPolicyGrant(ENTERPRISE_POLICY);
+    const b = await hashPolicyGrant({
+      requiresHumanApprovalFor: [...ENTERPRISE_POLICY.requiresHumanApprovalFor].reverse(),
+      maxLeaseTtlMs: ENTERPRISE_POLICY.maxLeaseTtlMs,
+      allowedDomains: [...ENTERPRISE_POLICY.allowedDomains].reverse(),
+      principalId: ENTERPRISE_POLICY.principalId,
+      policyId: ENTERPRISE_POLICY.policyId,
+      allowedTiers: [...ENTERPRISE_POLICY.allowedTiers].reverse(),
+    });
+    assert.equal(a, b);
+    assert.match(a, /^[0-9a-f]{64}$/);
   });
 
   it("refuses a lease that omits targetSnapshot", async () => {
@@ -163,6 +228,8 @@ describe("verifyLease", () => {
       expiresAt: Date.now() + 20_000,
       alg: "Ed25519",
       kid: "rogue-kid",
+      policyId: ENTERPRISE_POLICY.policyId,
+      policyHash: "00".repeat(32),
       signature: "cd".repeat(64),
     } as ExecutionLease;
     const v = await verifyLease(forged, { tabId: 1, targetIndex: 5 });

@@ -62,7 +62,7 @@ A typical twelve-minute pass: **Flagship → Refusal → Self-audit → Evidence
 
 The browser kernel is [`src/lib/bag/doctrine.ts`](src/lib/bag/doctrine.ts). It is a hand-mirror of the Node Gateway’s `security-doctrine.ts`. A change to either file is not done until the other is updated in the same change. [`doctrine.test.ts`](src/lib/bag/doctrine.test.ts) locks the clauses — do not weaken a probe to make a demo pass.
 
-Evidence is Ed25519. HMAC-era records are `UNVERIFIABLE`. Without a pinned key the verifier fails closed. The `kid` is derived from the key fingerprint; the console’s own identity is the only entry in the trust store.
+Evidence is Ed25519. HMAC-era records are `UNVERIFIABLE`. Without a pinned key the verifier fails closed. The `kid` is derived from the key fingerprint; the console’s own identity is the only entry in the trust store. `policyId` and `policyHash` sit inside the signed lease bytes — a missing grant is malformed, a swapped hash is an invalid signature, a rotated live policy is `ERR_LEASE_POLICY_DRIFT`.
 
 ## Labs (not in the v0.1 product)
 

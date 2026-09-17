@@ -10,7 +10,7 @@ const CLAUSES = [
   },
   {
     clause: "currently valid",
-    enforced: "TTL window and coherence check in verifyLease. Ceiling from policy maxLeaseTtlMs.",
+    enforced: "TTL window and coherence check in verifyLease. Ceiling from policy maxLeaseTtlMs. Live grant re-hashed; rotation is ERR_LEASE_POLICY_DRIFT.",
   },
   {
     clause: "non-replayed",
@@ -22,7 +22,7 @@ const CLAUSES = [
   },
   {
     clause: "signed",
-    enforced: "Unconditional crypto.verify. Exactly one success path, reachable only after verification.",
+    enforced: "Unconditional crypto.verify. policyId and policyHash sit inside the signed bytes. Exactly one success path.",
   },
   {
     clause: "by a trusted Gateway identity",

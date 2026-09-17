@@ -10,6 +10,7 @@ export const GUEST_STEPS = [
   { id: "G1", title: "Malformed fields", maps: "ERR_MALFORMED_LEASE" },
   { id: "G2", title: "Trusted kid", maps: "ERR_LEASE_UNTRUSTED_KID" },
   { id: "G3", title: "Ed25519 verify", maps: "ERR_LEASE_SIGNATURE_INVALID" },
+  { id: "G10", title: "Live grant", maps: "ERR_LEASE_POLICY_DRIFT" },
   { id: "G4", title: "TTL window", maps: "ERR_LEASE_EXPIRED" },
   { id: "G5", title: "Target bind", maps: "ERR_LEASE_TARGET_MISMATCH" },
   { id: "G6", title: "Nonce unused", maps: "ERR_LEASE_NONCE_REPLAYED" },

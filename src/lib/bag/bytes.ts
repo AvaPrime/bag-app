@@ -69,3 +69,22 @@ export async function sha256Hex(data: ArrayBuffer | Uint8Array | string): Promis
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return toHex(digest);
 }
+
+/** Deterministic JSON: object keys sorted, arrays in given order, undefined omitted. */
+export function canonicalJson(value: unknown): string {
+  return JSON.stringify(canonicalize(value));
+}
+
+function canonicalize(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(canonicalize);
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj).sort()) {
+    const v = obj[key];
+    if (v === undefined) continue;
+    out[key] = canonicalize(v);
+  }
+  return out;
+}
+

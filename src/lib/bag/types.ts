@@ -41,11 +41,14 @@ export interface ExecutionLease {
   expiresAt: number;
   alg: "Ed25519";
   kid: string;
+  policyId: string;
+  policyHash: string;
   signature: string;
   publicKey?: string;
 }
 
 export interface PolicyGrant {
+  policyId: string;
   principalId: string;
   allowedTiers: CapabilityTier[];
   allowedDomains: string[];
@@ -136,6 +139,7 @@ export interface KernelLog {
 export const MUTATING_TIERS: CapabilityTier[] = ["A1", "A2", "A3"];
 
 export const ENTERPRISE_POLICY: PolicyGrant = {
+  policyId: "enterprise-treasury-v0.1",
   principalId: "claude-enterprise-agent",
   allowedTiers: ["R0", "R1", "A1", "A2"],
   allowedDomains: ["*.internal.acmebank.com", "treasury.internal.acmebank.com"],
