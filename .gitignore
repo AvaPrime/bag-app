@@ -3,3 +3,9 @@ node_modules/
 .github_repo
 .env
 .env.*
+.grok/
+.vercel/
+attachments/
+artifacts/
+screenshots/
+*.log

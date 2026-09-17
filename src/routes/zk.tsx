@@ -582,7 +582,7 @@ function SigmaLab() {
   const ctx = () => ({
     evidenceId: lastEvidence?.evidenceId ?? "ev_unbound_lab",
     dispatched: reason === "DISPATCHED",
-    kid: identity?.kid ?? "gateway-eval-2026-09",
+    kid: identity?.kid ?? "unbound",
     boundSignature: lastEvidence?.signature.value ?? null,
   });
 
